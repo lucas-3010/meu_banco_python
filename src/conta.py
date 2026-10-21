@@ -1,4 +1,27 @@
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
+
+CENTAVOS = Decimal("0.01")
+
+
+def normalizar_valor(valor, operacao: str) -> Decimal:
+    if isinstance(valor, bool) or not isinstance(valor, Decimal):
+        raise ValueError(
+            f"O valor do {operacao} deve ser um Decimal."
+        )
+
+    if not valor.is_finite():
+        raise ValueError(
+            f"O valor do {operacao} deve ser um número finito."
+        )
+
+    valor = valor.quantize(CENTAVOS, rounding=ROUND_HALF_UP)
+
+    if valor <= 0:
+        raise ValueError(
+            f"O valor do {operacao} deve ser maior que zero."
+        )
+
+    return valor
 
 
 class Conta:
@@ -9,10 +32,7 @@ class Conta:
         self.extrato = []
 
     def depositar(self, valor: Decimal):
-        if valor <= 0:
-            raise ValueError(
-                "O valor do depósito deve ser maior que zero."
-            )
+        valor = normalizar_valor(valor, "depósito")
 
         self.saldo += valor
 
@@ -21,10 +41,7 @@ class Conta:
         )
 
     def sacar(self, valor: Decimal):
-        if valor <= 0:
-            raise ValueError(
-                "O valor do saque deve ser maior que zero."
-            )
+        valor = normalizar_valor(valor, "saque")
 
         if valor > self.saldo:
             raise ValueError(
@@ -42,6 +59,3 @@ class Conta:
 
     def mostrar_extrato(self):
         return self.extrato
-    
-    
-    
