@@ -69,3 +69,31 @@ def test_extrato_mantem_ordem_das_operacoes(conta):
         "Saque: -R$ 40.00",
         "Depósito: +R$ 5.00",
     ]
+
+
+def test_valor_e_arredondado_para_centavos(conta):
+    conta.depositar(Decimal("10.005"))
+    assert conta.mostrar_saldo() == Decimal("10.01")
+    assert conta.mostrar_extrato() == ["Depósito: +R$ 10.01"]
+
+
+def test_valor_que_arredonda_para_zero_e_rejeitado(conta):
+    with pytest.raises(ValueError, match="maior que zero"):
+        conta.depositar(Decimal("0.004"))
+    assert conta.mostrar_saldo() == Decimal("0.00")
+
+
+@pytest.mark.parametrize("valor", [Decimal("NaN"), Decimal("Infinity")])
+def test_valor_nao_finito_e_rejeitado(conta, valor):
+    with pytest.raises(ValueError, match="finito"):
+        conta.depositar(valor)
+    with pytest.raises(ValueError, match="finito"):
+        conta.sacar(valor)
+
+
+@pytest.mark.parametrize("valor", [10.5, 10, "10", True])
+def test_tipo_diferente_de_decimal_e_rejeitado(conta, valor):
+    with pytest.raises(ValueError, match="Decimal"):
+        conta.depositar(valor)
+    with pytest.raises(ValueError, match="Decimal"):
+        conta.sacar(valor)
