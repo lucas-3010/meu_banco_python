@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Meu Banco</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+html{color-scheme:light dark}
+body{margin:0}
+/* Layout: duas colunas no iPad (contas | conta aberta), uma coluna no celular. */
+:root {
+  --bg: #eef1f3;
+  --surface: #ffffff;
+  --fg: #14212b;
+  --muted: #5d6b76;
+  --line: #d9e0e5;
+  --accent: #0b6b68;
+  --accent-fg: #ffffff;
+  --pos: #12724a;
+  --neg: #b4382a;
+  --err-bg: #fbe9e6;
+  --ok-bg: #e2f3ea;
+  --display: "Fraunces", Georgia, serif;
+  --body: "Instrument Sans", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f171d; --surface: #17222a; --fg: #e8eef2; --muted: #93a3ae; --line: #2a3943;
+    --accent: #3fb5ae; --accent-fg: #06201f; --pos: #55c28f; --neg: #ef8a7c;
+    --err-bg: #3a1f1b; --ok-bg: #16322a; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f171d; --surface: #17222a; --fg: #e8eef2; --muted: #93a3ae; --line: #2a3943;
+  --accent: #3fb5ae; --accent-fg: #06201f; --pos: #55c28f; --neg: #ef8a7c;
+  --err-bg: #3a1f1b; --ok-bg: #16322a; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 16px;
+  padding-block: 20px 40px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.wrap { max-width: 980px; margin: 0 auto; display: grid; gap: 20px; }
+header h1 { font-family: var(--display); font-size: 1.9rem; margin: 0; letter-spacing: -0.01em; }
+header p { margin: 2px 0 0; color: var(--muted); }
+.grid { display: grid; grid-template-columns: minmax(0, 320px) minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 720px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+section { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px; min-width: 0; }
+h2 { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); margin: 0 0 12px; font-weight: 600; }
+.stack { display: grid; gap: 20px; }
+label { display: block; font-size: 0.85rem; color: var(--muted); margin-bottom: 4px; }
+input {
+  width: 100%; font: inherit; font-size: 17px; padding: 12px; border-radius: 10px;
+  border: 1px solid var(--line); background: var(--bg); color: var(--fg);
+}
+input:focus-visible, button:focus-visible { outline: 3px solid var(--accent); outline-offset: 1px; }
+button {
+  font: inherit; font-weight: 600; padding: 12px 16px; border-radius: 10px; border: 1px solid transparent;
+  background: var(--accent); color: var(--accent-fg); cursor: pointer; min-height: 46px;
+}
+button.alt { background: transparent; color: var(--fg); border-color: var(--line); }
+.row { display: flex; gap: 10px; flex-wrap: wrap; }
+.row > * { flex: 1 1 140px; min-width: 0; }
+.contas { display: grid; gap: 8px; margin-top: 14px; }
+.conta {
+  text-align: left; background: var(--bg); color: var(--fg); border: 1px solid var(--line);
+  display: flex; justify-content: space-between; gap: 10px; align-items: baseline; font-weight: 500;
+}
+.conta[aria-current="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.conta small { font-family: var(--mono); color: var(--muted); font-weight: 400; }
+.saldo { font-family: var(--display); font-size: 2.6rem; margin: 4px 0 0; font-variant-numeric: tabular-nums; }
+.titular { color: var(--muted); margin: 0; }
+.num { font-family: var(--mono); font-size: 0.85rem; color: var(--muted); }
+.msg { border-radius: 10px; padding: 10px 12px; font-size: 0.95rem; }
+.msg.err { background: var(--err-bg); color: var(--neg); }
+.msg.ok { background: var(--ok-bg); color: var(--pos); }
+ul.ext { list-style: none; margin: 0; padding: 0; }
+ul.ext li { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); font-family: var(--mono); font-size: 0.95rem; }
+ul.ext li:first-child { border-top: 0; }
+.dep { color: var(--pos); } .saq { color: var(--neg); }
+.vazio { color: var(--muted); margin: 0; }
+.foot { color: var(--muted); font-size: 0.8rem; }
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Meu Banco</h1>
+    <p>Crie contas, deposite, saque e veja o extrato. Valores em reais, com vírgula ou ponto.</p>
+  </header>
+
+  <div class="grid">
+    <div class="stack">
+      <section>
+        <h2>Nova conta</h2>
+        <form id="f-criar">
+          <label for="titular">Nome do titular</label>
+          <div class="row">
+            <input id="titular" autocomplete="off" placeholder="Ex.: Lucas">
+            <button type="submit">Criar conta</button>
+          </div>
+        </form>
+        <div id="lista" class="contas"></div>
+      </section>
+    </div>
+
+    <div class="stack">
+      <div id="msg" role="status" hidden></div>
+      <section id="painel"></section>
+      <section>
+        <h2>Extrato</h2>
+        <ul class="ext" id="extrato"></ul>
+      </section>
+    </div>
+  </div>
+  <p class="foot">As contas ficam salvas só neste navegador. Regras iguais às do app em Python: arredondamento para centavos (meio para cima), valor maior que zero e saque limitado ao saldo.</p>
+</div>
+
+<script>
+const KEY = "meu-banco-v1";
+let banco = { proximo: 1, contas: [] };
+let atual = null;
+
+try {
+  const salvo = JSON.parse(localStorage.getItem(KEY));
+  if (salvo && Array.isArray(salvo.contas)) banco = salvo;
+} catch (e) {}
+if (banco.contas.length === 0) {
+  // Exemplo inicial, para a tela já mostrar o funcionamento.
+  banco.contas.push({ numero: 1, titular: "Conta de exemplo", centavos: 11001,
+    extrato: [{ t: "d", c: 10000 }, { t: "d", c: 1001 }] });
+  banco.proximo = 2;
+}
+atual = banco.contas[0].numero;
+
+function salvar() { try { localStorage.setItem(KEY, JSON.stringify(banco)); } catch (e) {} }
+const $ = (id) => document.getElementById(id);
+const brl = (c) => (c / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+// Converte texto em centavos inteiros, arredondando meio para cima (como ROUND_HALF_UP).
+function lerValor(txt) {
+  const s = String(txt).trim().replace(",", ".");
+  if (!/^-?\d+(\.\d*)?$|^-?\.\d+$/.test(s)) throw new Error("Valor inválido.");
+  const neg = s.startsWith("-");
+  const [i, f = ""] = s.replace("-", "").split(".");
+  const dig = (f + "000").slice(0, 3);
+  let c = BigInt(i || "0") * 100n + BigInt(dig.slice(0, 2));
+  if (Number(dig[2]) >= 5) c += 1n;
+  if (neg || c <= 0n) throw new Error("O valor deve ser maior que zero.");
+  if (c > 9007199254740991n) throw new Error("Valor muito grande.");
+  return Number(c);
+}
+
+function aviso(texto, tipo) {
+  const m = $("msg");
+  m.hidden = !texto;
+  m.className = "msg " + tipo;
+  m.textContent = texto || "";
+}
+
+function conta() { return banco.contas.find((c) => c.numero === atual); }
+
+function render() {
+  $("lista").innerHTML = "";
+  banco.contas.forEach((c) => {
+    const b = document.createElement("button");
+    b.className = "conta";
+    b.type = "button";
+    b.setAttribute("aria-current", String(c.numero === atual));
+    const nome = document.createElement("span");
+    nome.textContent = c.titular;
+    const info = document.createElement("small");
+    info.textContent = "#" + c.numero + " · " + brl(c.centavos);
+    b.append(nome, info);
+    b.onclick = () => { atual = c.numero; aviso("", ""); render(); };
+    $("lista").append(b);
+  });
+
+  const c = conta();
+  const p = $("painel");
+  p.innerHTML = "";
+  if (!c) { p.innerHTML = '<p class="vazio">Crie uma conta para começar.</p>'; $("extrato").innerHTML = ""; return; }
+  p.innerHTML = `
+    <h2>Conta aberta</h2>
+    <p class="titular"></p>
+    <p class="num">Conta nº ${c.numero}</p>
+    <p class="saldo">${brl(c.centavos)}</p>
+    <form id="f-mov" style="margin-top:16px">
+      <label for="valor">Valor (R$)</label>
+      <input id="valor" inputmode="decimal" autocomplete="off" placeholder="0,00">
+      <div class="row" style="margin-top:10px">
+        <button type="button" id="b-dep">Depositar</button>
+        <button type="button" id="b-saq" class="alt">Sacar</button>
+      </div>
+    </form>`;
+  p.querySelector(".titular").textContent = c.titular;
+  $("f-mov").onsubmit = (e) => e.preventDefault();
+  $("b-dep").onclick = () => mover("d");
+  $("b-saq").onclick = () => mover("s");
+
+  const ul = $("extrato");
+  ul.innerHTML = "";
+  if (!c.extrato.length) {
+    ul.innerHTML = '<li class="vazio" style="font-family:var(--body)">Nenhuma movimentação.</li>';
+  } else {
+    c.extrato.slice().reverse().forEach((m) => {
+      const li = document.createElement("li");
+      const a = document.createElement("span");
+      const b = document.createElement("span");
+      a.textContent = m.t === "d" ? "Depósito" : "Saque";
+      b.textContent = (m.t === "d" ? "+" : "−") + " " + brl(m.c);
+      b.className = m.t === "d" ? "dep" : "saq";
+      li.append(a, b);
+      ul.append(li);
+    });
+  }
+}
+
+function mover(tipo) {
+  const c = conta();
+  try {
+    const v = lerValor($("valor").value);
+    if (tipo === "s" && v > c.centavos) throw new Error("Saldo insuficiente.");
+    c.centavos += tipo === "d" ? v : -v;
+    c.extrato.push({ t: tipo, c: v });
+    salvar();
+    render();
+    aviso(tipo === "d" ? "Depósito realizado." : "Saque realizado.", "ok");
+  } catch (e) {
+    aviso("Erro: " + e.message, "err");
+  }
+}
+
+$("f-criar").onsubmit = (e) => {
+  e.preventDefault();
+  const nome = $("titular").value.trim();
+  if (!nome) { aviso("Erro: O nome do titular não pode estar vazio.", "err"); return; }
+  const c = { numero: banco.proximo++, titular: nome, centavos: 0, extrato: [] };
+  banco.contas.push(c);
+  atual = c.numero;
+  $("titular").value = "";
+  salvar();
+  render();
+  aviso("Conta criada com sucesso! Número: " + c.numero, "ok");
+};
+
+render();
+</script>
+</body>
+</html>

@@ -23,3 +23,10 @@ Requer Python 3.8 ou superior. Valores aceitam vírgula ou ponto
 - Depósitos e saques devem ser maiores que zero (após o arredondamento).
 - Valores não numéricos, `NaN` e `Infinity` são rejeitados.
 - Saques acima do saldo são recusados com "Saldo insuficiente."
+
+## Versão web
+
+`web/index.html` é uma versão de uma página só, com as mesmas regras de
+validação, que roda em qualquer navegador (inclusive no iPad). Abra o arquivo
+no navegador ou publique a pasta `web/` no GitHub Pages. As contas ficam
+salvas no `localStorage` do navegador.
